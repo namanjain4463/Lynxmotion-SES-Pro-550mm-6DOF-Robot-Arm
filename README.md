@@ -28,6 +28,7 @@
 |------|----------|
 | `assets/` | Firmware blobs and other media referenced by this README. |
 | `SES-P-ROS2-Arms/` | A ready-to-build colcon workspace, named to match a fresh clone of the official Lynxmotion [`SES-P-ROS2-Arms`](https://github.com/Lynxmotion/SES-P-ROS2-Arms) repo. Contains those upstream packages with the patches from [`SES-P-ROS2-Arms/README.md`](SES-P-ROS2-Arms/README.md#ros2-control) already applied, plus a custom `machine_vision_pkg/` for vision-driven manipulation. See that README for the build, run, and per-node documentation. |
+| `wsl2_teleop/` | Running the real arm from Windows 11 + WSL2 (usbipd): start-up procedure, measured control-loop rate and delay, known limitations and recovery steps, plus a SpaceMouse teleop ROS 2 package and measurement scripts. See [`wsl2_teleop/README.md`](wsl2_teleop/README.md). |
 | `README.md` | This file -- joint limits and known launch warnings. |
 
 If you'd rather start from a clean upstream clone, ignore `SES-P-ROS2-Arms/` and follow the patches in [`SES-P-ROS2-Arms/README.md#ros2-control`](SES-P-ROS2-Arms/README.md#ros2-control) by hand instead.

@@ -1,0 +1,10 @@
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - pro_arm_joint_1
+      - pro_arm_joint_2
+      - pro_arm_joint_3
+      - pro_arm_joint_4
+      - pro_arm_joint_5
+      - pro_arm_joint_6
+    interface_name: position
