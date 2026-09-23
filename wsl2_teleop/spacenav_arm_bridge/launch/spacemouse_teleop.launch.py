@@ -2,9 +2,11 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -31,10 +33,20 @@ def generate_launch_description():
         executable="spacemouse_teleop",
         name="spacemouse_teleop",
         output="screen",
-        parameters=[{"linear_speed": 0.05, "angular_speed": 0.0}],
+        parameters=[{"linear_speed": ParameterValue(LaunchConfiguration("linear_speed"), value_type=float),
+                     "angular_speed": ParameterValue(LaunchConfiguration("angular_speed"), value_type=float),
+                     "start_mode": LaunchConfiguration("start_mode"),
+                     # calibrated 2026-09-22: both puck tilts were reversed, twist was right
+                     "rot_axis_map": [-1, -2, 3]}],
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument("linear_speed", default_value="0.1",
+                              description="Tip speed at full puck push, m/s"),
+        DeclareLaunchArgument("angular_speed", default_value="0.5",
+                              description="Gripper turn speed at full puck tilt/twist, rad/s (0.5 = ~29 deg/s)"),
+        DeclareLaunchArgument("start_mode", default_value="joint",
+                              description="joint = each puck motion drives one joint, tip = straight-line tip moves"),
         spawn,
         RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[switch])),
         RegisterEventHandler(OnProcessExit(target_action=switch, on_exit=[teleop])),

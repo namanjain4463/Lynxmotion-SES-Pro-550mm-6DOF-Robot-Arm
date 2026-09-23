@@ -153,6 +153,8 @@ those paths as relative to this workspace's `src/`.
 
    These are MoveIt planning ceilings only — the real arm physically tops out at ≈ `0.087 rad/s` ≡ `5 °/s` on every joint.
 
+   > Measured 2026-09-22 (see [`../wsl2_teleop/gate_a_phase0_results.md`](../wsl2_teleop/gate_a_phase0_results.md)): 5 °/s is not a hardware limit. Single moves reached 10–28 °/s, and ±15° steps peaked at 21–22 °/s (J1–J3), 28 °/s (J4) and 37–39 °/s (J5–J6), limited by the servo acceleration set in `pro_arm.ros2_control` (30 / 50 / 100 °/s²).
+
    Example block for `pro_arm_joint_1` (apply analogous edits to all six arm joints, using `1.31` for joints 4–6):
    ```yaml
    pro_arm_joint_1:
