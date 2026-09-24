@@ -9,6 +9,8 @@ Topics out (rate Hz): /gripper/position (Int32, per mille), /gripper/grip_state 
 Grasp events (grasp_monitor.py): /gripper/event (std_msgs/String, JSON): CAUGHT, SEATED, SLIP,
             LOST (GRADUAL/SUDDEN, with arm motion from /joint_states), RELEASED, MISSED
 Diagnostics: /diagnostics (connection, Modbus errors, read time, poll rate, grasp phase)
+RViz: the real finger position is mirrored onto the model's (simulated) gripper controller
+            (model_action, GripperCommand on joint_7), so the fingers in RViz follow the real ones.
 Optional CSV logs (log_dir): every state sample, every grasp event, and the diagnostics (1 Hz).
 
 On start it initialises the gripper if needed (the fingers move). On shutdown it only closes the
@@ -22,6 +24,8 @@ import os
 import time
 
 import rclpy
+from control_msgs.action import GripperCommand
+from rclpy.action import ActionClient
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
@@ -58,6 +62,12 @@ class GripperNode(Node):
                                     # measured at speed 50 %: in-contact creep <= 130, free close >= 1600
                                     contact_loss_speed=p("contact_loss_speed", 500.0).value)
         self.arm_moving_deg = p("arm_moving_deg", 0.5).value  # joint change in 0.5 s that counts as moving
+        # Model gripper (arm repo's CGE xacro): joint_7 = 0 m is open, 0.01 m closed; "" = no mirroring
+        model_action = p("model_action", "/gripper_action_controller/gripper_cmd").value
+        self.model_q_open = p("model_open_q", 0.0).value
+        self.model_q_closed = p("model_closed_q", 0.01).value
+        self.model_cli = ActionClient(self, GripperCommand, model_action) if model_action else None
+        self.model_sent = None      # (time, position) last mirrored
 
         self.grip = None
         self.target = None       # last commanded position
@@ -167,8 +177,22 @@ class GripperNode(Node):
         self.emit(self.monitor.sample(t, grip_state, pos, self.force_pct, self.arm_moving(now)))
         holding = self.monitor.phase == "holding"
         self.pub_diam.publish(Float32(data=self.monitor.diameter_mm(pos) if holding else float("nan")))
+        self.mirror_to_model(now, pos)
         if now - self.diag_t >= 1.0:
             self.publish_diagnostics(now, initialised, grip_state, pos)
+
+    def mirror_to_model(self, now, pos):
+        """Move the RViz/MoveIt model's fingers to the real finger position (fire and forget)."""
+        if self.model_cli is None or not self.model_cli.server_is_ready():
+            return
+        if self.model_sent is not None and (abs(pos - self.model_sent[1]) < 10 or now - self.model_sent[0] < 0.1):
+            return
+        goal = GripperCommand.Goal()
+        goal.command.position = self.model_q_open + (self.model_q_closed - self.model_q_open) * (
+            (self.open_pos - pos) / float(self.open_pos - self.closed_pos))
+        goal.command.max_effort = 0.0
+        self.model_cli.send_goal_async(goal)
+        self.model_sent = (now, pos)
 
     # ---------- grasp events and diagnostics ----------
     def emit(self, events):
@@ -184,10 +208,12 @@ class GripperNode(Node):
                 self.event_file.flush()
 
     def on_joint_states(self, msg):
-        if not msg.name or msg.name == ["gripper"]:
+        # Arm joints only: /joint_states also carries the model gripper's joint_7, which this node moves
+        arm = [q for name, q in zip(msg.name, msg.position) if name.startswith("pro_arm_joint_")]
+        if not arm:
             return
         now = time.monotonic()
-        self.arm_hist.append((now, list(msg.position)))
+        self.arm_hist.append((now, arm))
         while self.arm_hist and now - self.arm_hist[0][0] > 0.5:
             self.arm_hist.pop(0)
 

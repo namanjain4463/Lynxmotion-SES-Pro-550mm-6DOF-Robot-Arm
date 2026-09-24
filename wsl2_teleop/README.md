@@ -9,8 +9,8 @@ files and the clone step of the native guide differ):
 - Thesis repo (`namanjain4463/Thesis`, private) `hardware/lynxmotion_wsl2_teleop/` — the
   maintained copy.
 - **This folder: arm repo, branch `wsl2-bringup-spacemouse-teleop`, `wsl2_teleop/`** — public
-  mirror, last synced 2026-09-23 (teleop v5 + CGE-10-10 gripper). The arm repo's `main` branch is
-  not changed.
+  mirror, last synced 2026-09-23 (teleop v5 + CGE-10-10 gripper, gripper in RViz). The arm repo's
+  `main` branch is not changed.
 
 The package in both is identical to the one tested on the hardware.
 
@@ -126,12 +126,17 @@ while the arm launch is running.
    source ~/spacemouse_teleop_ws/install/setup.bash
    ros2 launch spacenav_arm_bridge real_arm_tuned.launch.py
    ```
-   This is the arm repo's `real_arm_control.launch.py` (which still works) with two changes made
-   on the fly, without touching the arm repo: the README joint limits are written into the URDF,
-   so RViz sliders and MoveIt planning respect them, and joints 5–6 get servo acceleration
-   30 deg/s² instead of 100 (smoother; section 7.5). Expect `hardware: real` and `README joint
-   limits in the URDF: yes` in the output. Options: `wrist_acceleration:=100`,
-   `readme_limits:=false`.
+   This is the arm repo's `real_arm_control.launch.py` (which still works) with three changes
+   made on the fly, without touching the arm repo: the README joint limits are written into the
+   URDF, so RViz sliders and MoveIt planning respect them; joints 5–6 get servo acceleration
+   30 deg/s² instead of 100 (smoother; section 7.5); and the **CGE-10-10 gripper is in the model**
+   (since 2026-09-23; it is physically mounted), so RViz shows it, MoveIt's collision checks
+   include it, and the tool point `pro_arm_ee` is the gripper tip, ~12 cm beyond the wrist flange
+   of the old gripper-less model. The model's gripper joint (`joint_7`) is simulated even with the
+   real arm; `gripper_node` mirrors the real finger position onto it
+   ([`gripper_cge_10_10.md`](gripper_cge_10_10.md)). Expect `hardware: real`, `gripper model:
+   cge_1010 (finger 40)` and `README joint limits in the URDF: yes` in the output. Options:
+   `wrist_acceleration:=100`, `readme_limits:=false`, `gripper:=none`, `finger:=20|40|60`.
 4. **Ready pose** — the all-zero pose stands the arm straight up, which is a kinematic
    singularity (section 5.3); the SRDF calls it **`default`** (there is no `home`). Teleop needs
    the **ready pose joint_2 = −50°, joint_3 = −60°, joint_5 = −40°** (others 0). Once teleop runs
@@ -451,8 +456,10 @@ so it is off. Joint 4 keeps the arm's 50 deg/s² (its ripple was already ±0.5°
 - The J2/J3 coupled limit is not enforced.
 - The RViz STOP button pause (the node listens to `/emergency_stop_button/feedback`) is not
   verified on the hardware; Ctrl-C in the teleop terminal is the tested way to stop.
-- TIP mode tilts and twist turn the gripper about the arm's `pro_arm_ee` frame; with the
-  gripper mounted, the rotation point should move to the centre between the fingers.
+- TIP mode: with the gripper model (default since 2026-09-23) `pro_arm_ee` is the model's gripper
+  tip, so straight-line moves and rotations are about the gripper instead of the bare flange. Not
+  yet tried on the real arm; joint directions and README limits are unchanged, and MoveIt accepts
+  the ready pose, the all-zero pose and a −100° wrist bend with the gripper (checked in simulation).
 
 ---
 

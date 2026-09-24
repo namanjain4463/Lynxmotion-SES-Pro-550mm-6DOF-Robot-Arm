@@ -98,6 +98,10 @@ save), so they cannot change how the gripper communicates.
   private Thesis repo): the
   MuJoCo mesh measurement (~3–18 mm) matches the *smallest* mounting band, not this one; the
   model's `finger` argument (20/40/60) must match the real mounting before grasp simulations.
+  Measured from the arm repo's finger meshes (inner fingertip circle, last 10 mm of the fingers,
+  `joint_7` 0 → 0.01 m): `finger 20` ≈ 11–24 → 3–7 mm; **`finger 40` ≈ 35–46 → 16–26 mm**, the
+  closest to the real ~52 → ~32 mm; `finger 60` is asymmetric (fingertip radii 12 / 32 / 20 mm),
+  so that model variant looks broken. None matches the real fingers exactly.
 
 **Grasp and loss signatures** (51 mm cylinder and other objects, force 20 %, removed by hand)
 - A normal hold creeps **0–31 ‰** in the first 1.5 s (seating), then stays flat.
@@ -137,7 +141,7 @@ SpaceMouse button (short press) calls `/gripper/toggle`.
 | `/gripper/event` | `std_msgs/String` (JSON) | grasp events, below |
 | `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | connection, poll rate, read time, Modbus errors, reconnects, grasp phase (1 Hz) |
 
-Parameters: `port` (/dev/ttyUSB0), `baud` (115200), `slave_id` (1), `force_pct` (20), `speed_pct`
+Parameters (besides `model_action`, `model_open_q`, `model_closed_q` above): `port` (/dev/ttyUSB0), `baud` (115200), `slave_id` (1), `force_pct` (20), `speed_pct`
 (50), `rate` (10 Hz), `seat_time` (1.5 s), `slip_permille` (20), `contact_loss_speed`
 (500 ‰/s), `diameter_open_mm` / `diameter_closed_mm` (51.6 / 31.6, provisional), `arm_moving_deg`
 (0.5), `log_dir` ("" = no logs). With `log_dir` it writes three CSVs per session:
@@ -147,6 +151,18 @@ Parameters: `port` (/dev/ttyUSB0), `baud` (115200), `slave_id` (1), `force_pct` 
 On start it initialises the gripper if needed (the fingers move). On shutdown it only closes the
 port: the gripper keeps its position, so a held object is not dropped. If the adapter disappears
 it reconnects by itself.
+
+### RViz / MoveIt model
+
+`real_arm_tuned.launch.py` and `sim_arm_tuned.launch.py` put the CGE-10-10 into the model by default
+(`gripper:=cge_1010 finger:=40`; `gripper:=none` for the old model). The arm repo's launch then also
+starts `gripper_action_controller` on the model's `joint_7`, which is **simulated even with the
+real arm**. `gripper_node` sends the real finger position to it (`model_action`, default
+`/gripper_action_controller/gripper_cmd`; `joint_7` = 0 m open … 0.01 m closed; mirrored when the
+position changes by 10 ‰, at most every 0.1 s), so **the fingers in RViz follow the real
+gripper**. It only mirrors, it does not add accuracy: the model's fingers are not the installed
+ones (above). Checked in simulation with a simulated gripper: a catch at 650 ‰ gave
+`joint_7` = 0.0036 m, opening gave 0; the arm-motion check ignores `joint_7`.
 
 ### Grasp events (`grasp_monitor.py`, pure Python, replayable on logs)
 
