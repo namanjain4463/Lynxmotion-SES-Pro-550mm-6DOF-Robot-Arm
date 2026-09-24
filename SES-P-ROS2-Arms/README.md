@@ -129,7 +129,11 @@ those paths as relative to this workspace's `src/`.
      </hardware>
      ```
      Edit `~/SES-P-ROS2-Arms/src/pro_arm_description/urdf/pro_arm.ros2_control` and replace **both**
-  occurrences (lines 16 and 172 — one for the arm `ros2_control` block, one for the gripper block).
+  occurrences (one for the arm `ros2_control` block, one for the gripper block). **Already applied in
+  this workspace:** the old name is commented out and the new one follows it (lines 16–17 and
+  174–175). This concerns Gazebo only; the gripper block is simulation-only in every mode (in `real`
+  mode it loads `fake_components/GenericSystem`), and the physical CGE-10-10 is driven separately
+  over Modbus RTU, see [`../wsl2_teleop/gripper_cge_10_10.md`](../wsl2_teleop/gripper_cge_10_10.md).
      - Original:
        ```xml
        <plugin>ign_ros2_control/IgnitionSystem</plugin>
@@ -348,6 +352,13 @@ Two design points worth flagging:
    `avoid_collisions=True` already set in the IK request, points below or
    inside the table return `NO_IK_SOLUTION`, and OMPL avoids any joint path
    that would intersect the table.
+3. **No gripper actuation.** The loop moves to the target and to the drop point but never opens or
+   closes the gripper (nothing in this workspace can: the gripper's `ros2_control` block is
+   simulated even in `real` mode). To actually grasp, add calls to the Modbus gripper node's
+   `/gripper/close` and `/gripper/open` services from
+   [`../wsl2_teleop/gripper_cge_10_10.md`](../wsl2_teleop/gripper_cge_10_10.md). Also note that
+   `move_to_default()` parks at the SRDF `default` pose (all joints 0, arm straight up), which is a
+   kinematic singularity.
 
 ### Example: vision-driven pick-and-place
 

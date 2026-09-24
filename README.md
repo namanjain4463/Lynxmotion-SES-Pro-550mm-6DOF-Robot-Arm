@@ -20,7 +20,7 @@
      Cannot go to +180 deg. because of the excessive tension appearing in the connection wires.
    - J6
 
-     Cannot test since we don’t have any grippers yet.
+     Cannot test since we don’t have any grippers yet. (Update 2026-09-23: a CGE-10-10 gripper is now mounted, but J6's range is still untested; tools and teleop keep ±180° minus a 5° margin.)
 
    Gripper: the CGE-10-10 is not driven by anything in `SES-P-ROS2-Arms/` (its `ros2_control` gripper block is simulation-only and uses `fake_components/GenericSystem` even in real mode). It is a separate Modbus RTU device; see [`wsl2_teleop/gripper_cge_10_10.md`](wsl2_teleop/gripper_cge_10_10.md).
 
@@ -40,6 +40,8 @@ If you'd rather start from a clean upstream clone, ignore `SES-P-ROS2-Arms/` and
 ## Cloning & Setup
 
 Two ways to get the workspace onto your machine, depending on whether you already maintain a colcon workspace.
+
+The URLs below point to the original repository (`gupta-alankrit/...`); `namanjain4463/Lynxmotion-SES-Pro-550mm-6DOF-Robot-Arm` is a fork whose `main` is identical (`b18068f`). Only the fork has the `wsl2-bringup-spacemouse-teleop` branch with `wsl2_teleop/`; clone it with `git clone -b wsl2-bringup-spacemouse-teleop https://github.com/namanjain4463/Lynxmotion-SES-Pro-550mm-6DOF-Robot-Arm.git`.
 
 ### Option A -- clone the whole repo and build in place
 
@@ -141,4 +143,4 @@ When running any of `ros2 launch pro_arm_moveit {move_arm, fake_arm_control, sim
    ```
    [moveit_ros.trajectory_execution_manager]: Failed to receive current joint state
    ```
-   Brief timing hiccup when MoveIt's trajectory execution manager asks for the latest joint state while the `pro_motor_hardware` read loop is mid-iteration on the LSS-P bus (each iteration polls all six servos sequentially). Harmless if it appears occasionally; only worth investigating if it repeats every iteration or blocks motion execution.
+   Brief timing hiccup when MoveIt's trajectory execution manager asks for the latest joint state while the `pro_motor_hardware` read loop is mid-iteration on the LSS-P bus (each iteration polls all six servos sequentially). Harmless if it appears occasionally; only worth investigating if it repeats every iteration or blocks motion execution. Measured under WSL2 + usbipd (2026-09-22): the loop runs at ~8–9 Hz instead of the configured 30 Hz, with occasional 0.3–3 s freezes; see [`wsl2_teleop/gate_a_phase0_results.md`](wsl2_teleop/gate_a_phase0_results.md).

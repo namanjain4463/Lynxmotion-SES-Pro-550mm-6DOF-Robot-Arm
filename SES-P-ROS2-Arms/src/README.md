@@ -8,7 +8,7 @@ The SES-P-ROS2-Arms repository contains common packages that are used by both th
 - [Package installation](#package-installation)
 - [Description package](#description-package)
 - [MoveIt package](#moveit-package)
-- [Simulated examples (C++)](#lss-ignition-moveit-example)
+- [Simulated examples (C++)](#pro-simulation-examples)
 - [Author](#author)
 - [Resources](#resources)
 
@@ -133,6 +133,8 @@ The decription and moveit packages launch files have the following configuration
 - default: 40
 
 * The 20 model is only available for the cge_1010 gripper and the 80 is only available for the pge_5040 gripper
+
+> Note (this fork, 2026-09-23): for the `cge_1010` the `finger` values correspond to the three finger-mounting positions of the Lynxmotion CGE-10-10 kit (drawn as 20 / 40 / 60 mm circles). Measured from the finger meshes, the `40` model spans a fingertip circle of about 35–46 mm open to 16–26 mm closed, and the `60` model has asymmetric fingers (tip radii about 12 / 32 / 20 mm). The real gripper with its installed fingers opens to about 52 mm. In `real` mode the gripper joint is simulated; see [`../../wsl2_teleop/gripper_cge_10_10.md`](../../wsl2_teleop/gripper_cge_10_10.md).
 
 **View Model in Rviz**
 

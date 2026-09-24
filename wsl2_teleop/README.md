@@ -261,7 +261,8 @@ Seen several times, usually a few minutes into a session and often while a move 
     x axis needs base + wrist rotation (3 cm ≈ 0.28 rad of joint motion even in a good pose),
     and the tip can never get closer than 12.5 cm to the base axis.
   - Working pose joint_2 = −50°, joint_3 = −60°, joint_5 = −40° (others 0): tip ~40 cm above
-    the base, condition number 19, all six ±3 cm moves solvable. Within the range the arm
+    the base (gripper-less model; with the gripper model, default since 2026-09-23, the tool point
+    is the gripper tip at ~30 cm), condition number 19, all six ±3 cm moves solvable. Within the range the arm
     reached safely during teleop (about −49° / −70° / −66°).
 - **The arm repo's URDF gives every joint limits of ±180°.** The real physical limits in the arm
   repo README (J1 ±180°, J2 ±90°, J3 ±115°, J4 −130…+160°, J5 −105…+180°, J6 not stated, J2/J3
