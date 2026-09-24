@@ -1,0 +1,58 @@
+t_s,step,init_state,grip_state,position_permille
+0.082,move to 700,1,0,968
+0.165,move to 700,1,0,873
+0.247,move to 700,1,0,746
+0.33,move to 700,1,1,682
+0.082,move to 1000,1,0,702
+0.164,move to 1000,1,0,811
+0.247,move to 1000,1,0,941
+0.329,move to 1000,1,1,1000
+0.085,move to 0,1,0,975
+0.171,move to 0,1,0,883
+0.257,move to 0,1,0,759
+0.344,move to 0,1,0,612
+0.43,move to 0,1,0,444
+0.517,move to 0,1,0,251
+0.6,move to 0,1,0,60
+0.685,move to 0,1,1,0
+0.084,move to 500,1,0,0
+0.172,move to 500,1,0,97
+0.275,move to 500,1,0,291
+0.359,move to 500,1,0,480
+0.446,move to 500,1,1,523
+0.083,open,1,0,538
+0.168,open,1,0,675
+0.256,open,1,0,849
+0.343,open,1,0,978
+0.429,open,1,1,1000
+0.085,close force 20,1,0,987
+0.168,close force 20,1,0,898
+0.256,close force 20,1,0,770
+0.341,close force 20,1,0,619
+0.428,close force 20,1,0,449
+0.513,close force 20,1,0,258
+0.599,close force 20,1,0,58
+0.686,close force 20,1,1,0
+0.084,open,1,0,0
+0.168,open,1,0,93
+0.256,open,1,0,269
+0.341,open,1,0,461
+0.426,open,1,0,662
+0.512,open,1,0,854
+0.596,open,1,0,983
+0.681,open,1,1,1000
+0.084,close force 50,1,0,935
+0.17,close force 50,1,0,686
+0.252,close force 50,1,0,365
+0.336,close force 50,1,0,43
+0.42,close force 50,1,1,0
+0.083,release,1,0,3
+0.165,release,1,0,125
+0.248,release,1,0,300
+0.33,release,1,0,505
+0.413,release,1,0,673
+0.495,release,1,0,799
+0.577,release,1,0,914
+0.659,release,1,0,977
+0.741,release,1,0,993
+0.823,release,1,1,1000

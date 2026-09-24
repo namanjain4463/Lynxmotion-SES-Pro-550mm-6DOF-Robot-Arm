@@ -1,0 +1,9 @@
+t_s,step,init_state,grip_state,position_permille
+0.081,pos 0,1,0,987
+0.163,pos 0,1,0,909
+0.245,pos 0,1,0,794
+0.327,pos 0,1,0,642
+0.409,pos 0,1,0,450
+0.492,pos 0,1,0,231
+0.573,pos 0,1,0,28
+0.655,pos 0,1,1,0

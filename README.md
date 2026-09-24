@@ -22,6 +22,8 @@
 
      Cannot test since we don’t have any grippers yet.
 
+   Gripper: the CGE-10-10 is not driven by anything in `SES-P-ROS2-Arms/` (its `ros2_control` gripper block is simulation-only and uses `fake_components/GenericSystem` even in real mode). It is a separate Modbus RTU device; see [`wsl2_teleop/gripper_cge_10_10.md`](wsl2_teleop/gripper_cge_10_10.md).
+
    Note: the URDF in `SES-P-ROS2-Arms/` gives every joint ±180°, so RViz and MoveIt do not know these limits (and the J2/J3 coupling is not modelled). `wsl2_teleop/spacenav_arm_bridge/launch/real_arm_tuned.launch.py` and `sim_arm_tuned.launch.py` write J1–J5 into the model at launch; see [`wsl2_teleop/README.md`](wsl2_teleop/README.md).
 
 ## Repository Layout
@@ -30,7 +32,7 @@
 |------|----------|
 | `assets/` | Firmware blobs and other media referenced by this README. |
 | `SES-P-ROS2-Arms/` | A ready-to-build colcon workspace, named to match a fresh clone of the official Lynxmotion [`SES-P-ROS2-Arms`](https://github.com/Lynxmotion/SES-P-ROS2-Arms) repo. Contains those upstream packages with the patches from [`SES-P-ROS2-Arms/README.md`](SES-P-ROS2-Arms/README.md#ros2-control) already applied, plus a custom `machine_vision_pkg/` for vision-driven manipulation. See that README for the build, run, and per-node documentation. |
-| `wsl2_teleop/` | Running the real arm from Windows 11 + WSL2 (usbipd) or native Ubuntu 22.04: start-up and recovery procedure, measured control-loop rate, delay, servo response, noise and backlash, and a SpaceMouse teleop ROS 2 package (joint and tip modes, button actions) with launch files that apply the joint limits above to the model (real arm and RViz simulation). See [`wsl2_teleop/README.md`](wsl2_teleop/README.md). |
+| `wsl2_teleop/` | Running the real arm from Windows 11 + WSL2 (usbipd) or native Ubuntu 22.04: start-up and recovery procedure, measured control-loop rate, delay, servo response, noise and backlash, and a SpaceMouse teleop ROS 2 package (joint and tip modes, button actions) with launch files that apply the joint limits above to the model (real arm and RViz simulation), plus a driver for the DH CGE-10-10 gripper (Modbus RTU over its own USB-RS485 adapter) with grasp/slip/loss detection. See [`wsl2_teleop/README.md`](wsl2_teleop/README.md). |
 | `README.md` | This file -- joint limits and known launch warnings. |
 
 If you'd rather start from a clean upstream clone, ignore `SES-P-ROS2-Arms/` and follow the patches in [`SES-P-ROS2-Arms/README.md#ros2-control`](SES-P-ROS2-Arms/README.md#ros2-control) by hand instead.

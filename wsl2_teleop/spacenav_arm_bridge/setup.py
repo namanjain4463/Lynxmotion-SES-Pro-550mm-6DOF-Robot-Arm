@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'twist_bridge = spacenav_arm_bridge.twist_bridge:main',
             'spacemouse_teleop = spacenav_arm_bridge.spacemouse_teleop:main',
+            'gripper_node = spacenav_arm_bridge.gripper_node:main',
         ],
     },
 )

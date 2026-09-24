@@ -3,7 +3,7 @@
 <package format="3">
   <name>spacenav_arm_bridge</name>
   <version>0.0.0</version>
-  <description>SpaceMouse teleop (joint and tip modes) for the Lynxmotion SES-Pro arm, plus launch files that apply the real joint limits</description>
+  <description>SpaceMouse teleop (joint and tip modes) and DH CGE-10-10 gripper node for the Lynxmotion SES-Pro arm, plus launch files that apply the real joint limits</description>
   <maintainer email="namanjain@todo.todo">namanjain</maintainer>
   <license>TODO: License declaration</license>
 
@@ -14,6 +14,9 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>lifecycle_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>python3-serial</exec_depend>
   <exec_depend>moveit_msgs</exec_depend>
   <exec_depend>controller_manager_msgs</exec_depend>
   <exec_depend>python3-numpy</exec_depend>

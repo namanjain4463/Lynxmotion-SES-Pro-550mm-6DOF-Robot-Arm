@@ -9,14 +9,19 @@ files and the clone step of the native guide differ):
 - Thesis repo (`namanjain4463/Thesis`, private) `hardware/lynxmotion_wsl2_teleop/` — the
   maintained copy.
 - **This folder: arm repo, branch `wsl2-bringup-spacemouse-teleop`, `wsl2_teleop/`** — public
-  mirror, last synced 2026-09-22 (teleop v5). The arm repo's `main` branch is not changed.
+  mirror, last synced 2026-09-23 (teleop v5 + CGE-10-10 gripper). The arm repo's `main` branch is
+  not changed.
 
 The package in both is identical to the one tested on the hardware.
 
 Contents:
 - [`spacenav_arm_bridge/`](spacenav_arm_bridge) — ROS 2 package: the SpaceMouse teleop node, the
-  tuned real-arm launch (README joint limits, calmer wrist servos) and the matching simulation launch
-- [`tools/`](tools) — measurement scripts used to find the problems described here
+  DH CGE-10-10 gripper node with grasp/slip detection, the tuned real-arm launch (README joint
+  limits, calmer wrist servos) and the matching simulation launch
+- [`gripper_cge_10_10.md`](gripper_cge_10_10.md) — the gripper: wiring, register map, driver,
+  grasp/slip/loss events, measured aperture and behaviour
+- [`tools/`](tools) — measurement scripts used to find the problems described here, and the
+  standalone gripper test tool
 - [`native_ubuntu_setup.md`](native_ubuntu_setup.md) — the same pipeline on native Ubuntu 22.04
   (no usbipd; recommended for the final setup)
 - [`gate_a_phase0_results.md`](gate_a_phase0_results.md) and [`data/`](data) — measured servo
@@ -34,7 +39,11 @@ it); in TIP mode the tip follows the commanded velocity to within ~5% on every a
 the button actions, the joint limits and the speeds were tested on the real arm on 2026-09-22
 and judged "working very good" by the operator (section 7). The README joint limits are
 enforced in teleop and, with this folder's launch file, in RViz/MoveIt planning too. The
-gripper has no driver yet. The main limitation is the
+**CGE-10-10 gripper** works from ROS since 2026-09-23 through its own USB-RS485 adapter (the arm
+repo has no gripper driver): the right SpaceMouse button toggles it, and the node reports catches,
+slip, losses and hold times ([`gripper_cge_10_10.md`](gripper_cge_10_10.md)); it has not yet been
+used together with the real arm (the laptop has two USB ports; a hub is needed). The main
+limitation is the
 Windows → WSL2 USB forwarding (usbipd): the arm driver's control loop only reaches **~9 Hz
 instead of 30 Hz**, commands reach the servos **~0.35 s late**, the link occasionally
 **freezes for ~3 s**, and it sometimes **drops completely** until WSL is restarted. MoveIt
@@ -105,6 +114,11 @@ while the arm launch is running.
    ```powershell
    usbipd attach --wsl --hardware-id 256f:c635 --auto-attach
    ```
+   With the gripper, a third window (see [`gripper_cge_10_10.md`](gripper_cge_10_10.md); arm,
+   SpaceMouse and gripper together need a USB hub on a two-port laptop):
+   ```powershell
+   usbipd attach --wsl --hardware-id 1a86:7523 --auto-attach
+   ```
 3. **WSL terminal 1** — arm (MoveIt + controllers + RViz):
    ```bash
    ls -l /dev/ttyACM0    # the arm's serial port must exist
@@ -138,7 +152,9 @@ while the arm launch is running.
    Expect `Successfully switched controllers`, `SpaceMouse teleop ready` and the mode line.
    On a second run in the same arm session the spawner prints `Controller already loaded` or
    `Failed to configure controller`; both are harmless (the controller is already there).
-   Launch options: `start_mode:=tip`, `linear_speed:=...`, `angular_speed:=...` (section 7).
+   Launch options: `start_mode:=tip`, `linear_speed:=...`, `angular_speed:=...` (section 7);
+   gripper: `gripper:=true gripper_log_dir:=$HOME/gripper_logs` (also `gripper_port:=...`,
+   `gripper_force:=...`), which starts the gripper node before the controller switch.
 7. **Back to planning mode** (RViz Plan & Execute) — Ctrl-C terminal 3, then:
    ```bash
    ros2 control switch_controllers --deactivate forward_position_controller --activate arm_trajectory_controller
@@ -288,7 +304,7 @@ SpaceMouse Compact, two buttons (`/spacenav/joy` index 0 = right, 1 = left):
 | Button | Short press | Hold 1 s |
 |---|---|---|
 | **Left** | switch JOINT ↔ TIP mode (the terminal prints the new mode) | go to the ready pose |
-| **Right** | gripper open/close — **not connected yet** (prints "no gripper driver yet") | precision mode on/off (all speeds ×0.3) |
+| **Right** | gripper open/close (needs the teleop launch with `gripper:=true`) | precision mode on/off (all speeds ×0.3) |
 
 Any button press while the arm is moving to the ready pose stops that move. The mode and the
 precision setting are printed every time they change.
@@ -427,9 +443,9 @@ so it is off. Joint 4 keeps the arm's 50 deg/s² (its ripple was already ±0.5°
 
 ### 7.6 Open items
 
-- **Gripper (CGE-10-10, arrives 2026-09-23):** the arm repo has no real gripper driver (its
-  "real" mode uses `fake_components/GenericSystem` for the gripper). Plan: a small gripper node,
-  then the right button's short press toggles open/close.
+- **Gripper:** working and on the right button since 2026-09-23; not yet used together with the
+  real arm (needs a USB hub). Open gripper items: [`gripper_cge_10_10.md`](gripper_cge_10_10.md),
+  section 8.
 - The ~0.3 s lag and the 0.3–3 s loop freezes remain (WSL2/usbipd; native Ubuntu should fix
   them, [`native_ubuntu_setup.md`](native_ubuntu_setup.md)).
 - The J2/J3 coupled limit is not enforced.
@@ -455,6 +471,7 @@ Run in a WSL terminal with the arm workspace sourced and the arm launch running.
 | `arm_characterize.py all` | Gate A Phase 0: standstill noise, loop timing, per-joint step response, backlash, speed/acceleration, moving-target ripple; writes CSV + summary | forward controller active, teleop not running, ready pose |
 | `arm_characterize.py play SECONDS` | live joint readings while you push the arm by hand | same |
 | `axis_calib.py` | moves the tip ±3 cm along each arm axis (and back), asks which way it went, records three puck pushes, prints `axis_map` | planning mode, `spacenav_node`, arm in the working pose |
+| `gripper_test.py selftest\|status\|test\|pos N\|force N\|speed N\|init\|watch S` | the CGE-10-10 over RS-485 without ROS (details in [`gripper_cge_10_10.md`](gripper_cge_10_10.md)); CSV to `~/gripper_logs/` | the USB-RS485 adapter attached; not while `gripper_node` runs |
 
 `arm_timer.py` and `fwd_test.py` refuse moves over 0.6 rad per command; `axis_calib.py` refuses
 test moves that swing any joint more than 0.35 rad. Keep the arm's reach clear when running them.

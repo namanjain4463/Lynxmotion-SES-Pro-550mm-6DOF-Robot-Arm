@@ -10,6 +10,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import JointState, Joy
 from std_msgs.msg import Float64MultiArray, String
+from std_srvs.srv import Trigger
 from visualization_msgs.msg import InteractiveMarkerFeedback
 
 from spacenav_arm_bridge.arm_kinematics import (ArmKinematics, dls_step, path_min_height,
@@ -31,7 +32,7 @@ class SpacemouseTeleop(Node):
     pose inside the joint limits can be reached. TIP mode: the puck moves the arm tip in
     straight lines and turns the gripper, as described below.
     Buttons (SpaceMouse Compact): left short = switch mode, left hold = go to the ready pose;
-    right short = gripper open/close (no gripper driver yet), right hold = precision (slow) mode.
+    right short = gripper open/close (via gripper_node's /gripper/toggle), right hold = precision mode.
 
     Every step starts from the last COMMANDED joints (open loop): restarting from the measured
     position loses over 90% of the motion on this arm because of the ~0.35 s servo delay.
@@ -154,6 +155,7 @@ class SpacemouseTeleop(Node):
         self.valid_cli = self.create_client(GetStateValidity, "/check_state_validity")
         self.hw_cli = self.create_client(ListHardwareComponents, "/controller_manager/list_hardware_components")
         self.ctrl_cli = self.create_client(ListControllers, "/controller_manager/list_controllers")
+        self.gripper_cli = self.create_client(Trigger, "/gripper/toggle")
         self.create_timer(1.0 / self.rate, self.tick)
         self.create_timer(2.0, self.check_health)
         self.get_logger().info("Waiting for /robot_description and /joint_states ...")
@@ -234,7 +236,16 @@ class SpacemouseTeleop(Node):
             self.active_joint = None
             self.announce_mode()
         elif b == self.gripper_button:
-            self.get_logger().warn("Gripper button: no gripper driver yet, nothing happens")
+            if not self.gripper_cli.service_is_ready():
+                self.get_logger().warn("Gripper button: no gripper node running "
+                                       "(start the teleop launch with gripper:=true)")
+                return
+            self.gripper_cli.call_async(Trigger.Request()).add_done_callback(self.on_gripper)
+
+    def on_gripper(self, fut):
+        res = fut.result()
+        if res is None or not res.success:
+            self.get_logger().warn(f"Gripper: {res.message if res is not None else 'no answer'}")
 
     def hold_press(self, b):
         if b == self.mode_button:

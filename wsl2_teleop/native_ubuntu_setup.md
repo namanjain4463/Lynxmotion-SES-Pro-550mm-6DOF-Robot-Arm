@@ -64,6 +64,21 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 This also creates `/dev/lynxmotion_arm`, a stable name for the arm. The arm's launch files
 still use `/dev/ttyACM0`, so keep the arm as the only `ttyACM` device, or plug it in first.
 
+**Gripper adapter (CH340, `1a86:7523`; not yet tried on native Ubuntu).** Ubuntu 22.04's braille
+display service `brltty` is known to claim CH340 adapters, and then `/dev/ttyUSB0` disappears
+right after plugging in (`dmesg` shows the device taken by `brltty`). If that happens and you do
+not use a braille display:
+```bash
+sudo apt remove brltty
+```
+A stable name for the gripper, the same way as for the arm:
+```bash
+echo 'ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1", SYMLINK+="cge_gripper"' \
+  | sudo tee /etc/udev/rules.d/99-cge-gripper.rules
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+Then use `gripper_port:=/dev/cge_gripper` (any other CH340 device would match the same rule).
+
 **Real-time scheduling (optional, may reduce loop jitter).** `ros2_control_node` warns
 `Could not enable FIFO RT scheduling policy`. To allow it:
 ```bash
@@ -126,6 +141,8 @@ ros2 launch spacenav_arm_bridge spacemouse_teleop.launch.py
 Wait for `SpaceMouse teleop ready`. **Hold the left SpaceMouse button for 1 s** = go to the
 ready pose; a short press switches between JOINT and TIP mode (all controls: main
 [README](README.md) section 7). Ctrl-C stops teleop (the arm holds its position).
+With the gripper, add `gripper:=true gripper_log_dir:=$HOME/gripper_logs` to the launch line;
+the right button then toggles it ([`gripper_cge_10_10.md`](gripper_cge_10_10.md)).
 
 **Back to RViz planning mode** (Plan & Execute), in any sourced terminal:
 ```bash
@@ -172,6 +189,8 @@ cycle), not WSL2.
 ## Differences from the WSL2 notes, in one list
 
 - No usbipd, no `wsl --shutdown`, no PowerShell windows, and no bus IDs.
+- The gripper's CH340 adapter may need `brltty` removed (section 3); with a spare USB port the
+  arm, the SpaceMouse and the gripper can all be connected at once.
 - `dialout` group and the ModemManager udev rule replace the usbipd bind/attach steps.
 - SpaceMouse: same `spacenavd` + `spacenav_node`. Restart `spacenavd` if the SpaceMouse was
   plugged in after boot.
