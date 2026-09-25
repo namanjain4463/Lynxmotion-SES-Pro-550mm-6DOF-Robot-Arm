@@ -189,6 +189,8 @@ cycle), not WSL2.
 ## Differences from the WSL2 notes, in one list
 
 - No usbipd, no `wsl --shutdown`, no PowerShell windows, and no bus IDs.
+- The RealSense D455 camera: install and tests in [`realsense_d455.md`](realsense_d455.md)
+  (section 4 is the native-Ubuntu checklist).
 - The gripper's CH340 adapter may need `brltty` removed (section 3); with a spare USB port the
   arm, the SpaceMouse and the gripper can all be connected at once.
 - `dialout` group and the ModemManager udev rule replace the usbipd bind/attach steps.
@@ -197,3 +199,37 @@ cycle), not WSL2.
 - The simulation launch (`sim_arm_tuned.launch.py`, main README section 4) works the same.
 - Everything else is identical: the same arm repo build, teleop package, tools, controller
   switching, ready pose and joint-limit behaviour.
+
+## Lab PC — set up 2026-09-23, not yet tested with hardware
+
+Ubuntu 22.04.5 with ROS 2 Humble desktop already installed. Sections 2 and 4 were done, with these
+differences from the steps above:
+
+- **Network (university) login:** the account is not in `/etc/passwd`, so `sudo usermod -aG dialout`
+  does not work. Instead the udev rules give the ports `MODE="0666"`:
+  ```bash
+  echo 'ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", ENV{ID_MM_DEVICE_IGNORE}="1", MODE="0666", SYMLINK+="lynxmotion_arm"' | sudo tee /etc/udev/rules.d/99-lynxmotion-arm.rules
+  echo 'ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1", MODE="0666", SYMLINK+="cge_gripper"' | sudo tee /etc/udev/rules.d/99-cge-gripper.rules
+  echo 'KERNEL=="hidraw*", ATTRS{idVendor}=="256f", MODE="0666"' | sudo tee /etc/udev/rules.d/99-spacemouse.rules
+  sudo udevadm control --reload-rules && sudo udevadm trigger
+  ```
+- **brltty** was installed (service disabled, but its udev rule matches `1a86/7523`): removed with
+  `sudo apt remove -y brltty`. Also `sudo rosdep init` (it had never been run) and `python3-serial`.
+- **conda:** ROS 2 Humble needs the system Python 3.10; any active conda env breaks it. The helper
+  [`tools/ros_arm_env.sh`](tools/ros_arm_env.sh) (copied to `~`) turns conda off and sources ROS and
+  both workspaces: `source ~/ros_arm_env.sh` at the start of every terminal.
+- **Arm workspace** is a fresh clone of the arm repo `main` at `~/Lynxmotion-SES-Pro-550mm-6DOF-Robot-Arm`
+  (a separate clone used for Isaac Sim has local edits and is not used for ROS). `rosdep check`
+  still lists `ros2_controllers_test_nodes`, `joint_state_publisher_gui`, `ros_gz_bridge`, `ros_gz_sim`,
+  `ign_ros2_control`, `moveit_resources`, `rviz_visual_tools`: all `exec_depend` of the Gazebo/demo
+  launches only; the build (6 packages) and the launches used here do not need them.
+- **Isaac Sim's ROS 2 bridge** on this PC uses the default `ROS_DOMAIN_ID=0` too; do not run it at
+  the same time as the arm.
+- **Checked without hardware** (fake hardware, RViz offscreen): `sim_arm_tuned.launch.py` starts with
+  all controllers active, `/joint_states` at 30 Hz, "gripper model: cge_1010 (finger 40)", README limits
+  yes; `spacemouse_teleop.launch.py gripper:=true gripper_port:=/dev/cge_gripper` switches to
+  `forward_position_controller`, reports teleop ready and offers `/gripper/open|close|toggle`; with no
+  gripper attached, `gripper_node` retries every 2 s, so plugging it in later needs no restart.
+  `gripper_test.py selftest` passes.
+- **Not yet done:** anything with the arm, gripper or SpaceMouse plugged in, and section 7 (loop rate
+  on native Ubuntu). Record the results here when done.

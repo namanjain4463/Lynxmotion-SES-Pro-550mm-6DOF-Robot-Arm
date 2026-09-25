@@ -9,8 +9,8 @@ files and the clone step of the native guide differ):
 - Thesis repo (`namanjain4463/Thesis`, private) `hardware/lynxmotion_wsl2_teleop/` — the
   maintained copy.
 - **This folder: arm repo, branch `wsl2-bringup-spacemouse-teleop`, `wsl2_teleop/`** — public
-  mirror, last synced 2026-09-23 (teleop v5 + CGE-10-10 gripper, gripper in RViz). The arm repo's
-  `main` branch is not changed.
+  mirror, last synced 2026-09-25 (teleop v5, CGE-10-10 gripper, RealSense D455 notes). The arm
+  repo's `main` branch is not changed.
 
 The package in both is identical to the one tested on the hardware.
 
@@ -20,6 +20,8 @@ Contents:
   limits, calmer wrist servos) and the matching simulation launch
 - [`gripper_cge_10_10.md`](gripper_cge_10_10.md) — the gripper: wiring, register map, driver,
   grasp/slip/loss events, measured aperture and behaviour
+- [`realsense_d455.md`](realsense_d455.md) — the Intel RealSense D455 camera: install, connection,
+  what streams under WSL2 and what to check on native Ubuntu
 - [`tools/`](tools) — measurement scripts used to find the problems described here, and the
   standalone gripper test tool
 - [`native_ubuntu_setup.md`](native_ubuntu_setup.md) — the same pipeline on native Ubuntu 22.04
