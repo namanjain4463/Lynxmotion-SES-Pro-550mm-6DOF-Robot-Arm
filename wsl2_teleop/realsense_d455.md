@@ -102,3 +102,37 @@ colour together at full size and the IMU are still to be checked. Check:
 For the thesis measurements (protocol review, 2026-09-22): the D455's minimum depth is about
 0.52 m at full resolution (lower resolutions reach closer); validate the chosen profile at the
 real working distance, and keep raw depth with invalid-pixel masks (no hole filling).
+
+## 5. Lab PC (native Ubuntu 22.04), results 2026-09-25
+
+Same camera (serial 313522302002, firmware 5.17.3.10), ROS apt packages 2.58.4 / 4.58.4, **USB 3.2**.
+
+**Everything at full size together, SDK level** (`rs-data-collect`, the `c.txt` of section 4, `-t 10`):
+all 4 streams matched, and every stream delivered:
+
+| Stream | Requested | Frames in the ~10 s run |
+|---|---|---|
+| depth | 848×480 @ 30 | 288 |
+| colour | 1280×720 @ 30 | 344 |
+| accel | 100 Hz | 1321 |
+| gyro | 200 Hz | 2342 |
+
+So the camera and the USB link carry depth + colour at full size and the IMU at once; the WSL2 limit
+of section 3 does not apply. The counts other than depth are 10-17 % above 10 s × rate: the streams
+start and stop at slightly different times, so read them as "no loss", not as exact rates. Warnings:
+`IMU Calibration is not available, default intrinsic and extrinsic will be used` (the IMU works; it
+is uncalibrated) and `HID set_power 1 failed` (harmless: the gyro and accel data arrived).
+
+**ROS node, colour only** (`enable_depth:=false rgb_camera.color_profile:=1280x720x30`, 20 s,
+counted by a subscriber from the image stamps): **30.0 Hz, 0 of 600 frames missing**, image stamp ->
+arrival delay 29 ms median (45 ms max), so the stamps are on the computer's clock. `ros2 topic hz`
+on the same stream at the same time showed 6-12 Hz: it cannot keep up with 2.7 MB images.
+
+**ROS node, full settings** (section 4 step 3, `ros2 topic hz` only, so the image rates are lower
+bounds): depth 15-23 Hz, colour 7-10 Hz, aligned depth ~9 Hz, gaps up to 1.2 s; **IMU 199.8 Hz**
+steady (small messages, which `topic hz` measures correctly). Not yet separated: how much of the
+image slowdown is `topic hz` and how much is the node's CPU alignment. Measure those rates with a
+stamp-counting subscriber before relying on aligned depth at full size.
+
+Use on this computer: colour only at 1280×720×30 for marker tracking (the grip pilot); add depth
+only when it is needed, and check its rate with a stamp-counting subscriber.
